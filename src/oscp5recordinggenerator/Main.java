@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016 Christopher Wells <cwellsny@nycap.rr.com>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -21,19 +21,26 @@
  */
 package oscp5recordinggenerator;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.err.println("No file given");
+            System.err.println("No input file given");
             System.exit(1);
         }
-
         String inputFileName = args[0];
+        String outputFileName = null;
+        if (args.length > 1){
+            outputFileName = args[1];
+        }
+
         File inputFile = new File(inputFileName);
         Scanner fileScanner = null;
         try {
@@ -65,11 +72,47 @@ public class Main {
 
             //generatedXml += channel + ":" + time + ":" + value + "\n";
             generatedXml += formatMessage(channelStart + channel, value, time);
-        } 
+        }
 
-        generatedXml += "</oscp5messages>";
+        generatedXml += "</oscp5messages>\n";
 
-        System.out.println(generatedXml);
+        if (outputFileName != null) {
+            File outputFile = new File(outputFileName);
+            if (!writeToFile(generatedXml, outputFile)) {
+                System.err.println("Output files was not able to be correctly written to.");
+            }
+        } else {
+            System.out.println(generatedXml);
+        }
+    }
+
+    /**
+     * Writes the given String to the given file.
+     *
+     * @param string The String to write to the file.
+     * @param file The file to write the String to.
+     * @return <code>true</code> if the write succedes, or <code>false</code>
+     * if it fails.
+     */
+    public static boolean writeToFile(String string, File file) {
+        BufferedWriter out = null;
+        try {
+            FileWriter fileWriter = new FileWriter(file);
+            out = new BufferedWriter(fileWriter);
+            out.write(string);
+            return true;
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException ex) {
+                    System.err.println(ex.getMessage());
+                }
+            }
+        }
+        return false;
     }
 
     public static String formatMessage(String channel, String value, int time) {
